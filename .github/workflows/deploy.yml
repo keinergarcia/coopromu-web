@@ -23,6 +23,13 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+      - uses: actions/configure-pages@v5
+      - name: Fix environment protection rules
+        run: |
+          curl -s -X PUT "${{ github.api_url }}/repos/${{ github.repository }}/environments/github-pages" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            -d '{"deployment_branch_policy":{"protected_branches":true,"custom_branch_policies":false}}'
       - run: npm ci
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
@@ -32,6 +39,9 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
